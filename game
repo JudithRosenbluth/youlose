@@ -1,0 +1,331 @@
+// Variables for game
+let playerColor = "";
+let playerX, playerY;
+let playerRadius = 20;
+let obstacleWidth = 50;
+let obstacleHeight = 150;
+let obstacleSpeed = 5;
+let obstacles = [];
+let gameOver = false;
+let lives = 3;
+
+// Variables for intro sequence
+let introContainer;
+let choosePlayerText;
+let redCircle, blueCircle, greenCircle;
+
+let continueText = "";
+let continueTextTime = 0;
+
+let collisionSound;
+let soundtrack;
+
+let soundtrackPlay = false;
+
+function preload(){
+ collisionSound = loadSound('assets/explosion.wav'); 
+  soundtrack = loadSound('assets/soundtrack.mp3');
+  
+}
+
+function setup() {
+  // Set up canvas and webcam capture
+//  w = windowWidth;
+//  h = windowHeight;
+//  capture = createCapture(VIDEO);
+//  createCanvas(w, h);
+//  capture.size(w, h);
+//  capture.hide();
+
+  // Set up clmtrackr for eye tracking
+//  tracker = new clm.tracker();
+//  tracker.init();
+//  tracker.start(capture.elt);
+  createCanvas(600, 500);
+  playerX = width / 2;
+  playerY = height - playerRadius;
+// Create intro sequence elements
+introContainer = createDiv("");
+introContainer.style("position", "absolute");
+introContainer.style("top", "0");
+introContainer.style("left", "0");
+introContainer.style("width", "100%");
+introContainer.style("height", "100%");
+introContainer.style("display", "flex");
+//introContainer.style("flex-direction", "column");
+introContainer.style("justify-content", "center");
+introContainer.style("align-items", "center");
+
+choosePlayerText = createDiv("Choose Your Player");
+choosePlayerText.style("font-size", "30px");
+choosePlayerText.style("text-align", "center");
+choosePlayerText.style("margin-bottom", "20px");
+
+redCircle = createDiv("");
+redCircle.style("width", "50px");
+redCircle.style("height", "50px");
+redCircle.style("background-color", "red");
+redCircle.style("border", "2px solid white");
+redCircle.style("border-radius", "50%");
+redCircle.style("display", "inline-block");
+redCircle.style("margin", "10px");
+
+blueCircle = createDiv("");
+blueCircle.style("width", "50px");
+blueCircle.style("height", "50px");
+blueCircle.style("background-color", "blue");
+blueCircle.style("border", "2px solid white");
+blueCircle.style("border-radius", "50%");
+blueCircle.style("display", "inline-block");
+blueCircle.style("margin", "10px");
+
+
+greenCircle = createDiv("");
+greenCircle.style("width", "50px");
+greenCircle.style("height", "50px");
+greenCircle.style("background-color", "green");
+greenCircle.style("border", "2px solid white");
+greenCircle.style("border-radius", "50%");
+greenCircle.style("display", "inline-block");
+greenCircle.style("margin", "10px");
+
+redCircle.mousePressed(selectPlayerColor.bind(this, "red"));
+blueCircle.mousePressed(selectPlayerColor.bind(this, "blue"));
+greenCircle.mousePressed(selectPlayerColor.bind(this, "green"));
+
+// Create start button
+//startButton = createButton("Start Game");
+//startButton.style("display", "block");
+//startButton.style("margin", "5px auto 0");
+//startButton.style("padding", "10px 20px");
+//startButton.style("font-size", "24px");
+//startButton.mousePressed(() => {
+  if (playerColor !== "") {
+    startGame();
+    introContainer.hide();
+  }
+  else {
+    textSize(20);
+    textAlign(RIGHT, TOP);
+    fill(255, 0, 0);
+    text("You need to pick a player", width, 30);
+  }
+
+
+
+introContainer.child(choosePlayerText);
+introContainer.child(redCircle);
+introContainer.child(blueCircle);
+introContainer.child(greenCircle);
+//introContainer.child(startButton);
+
+function drawIntro() {
+  if (playerColor !== "") {
+    choosePlayerText.html(`Choose Your Player - ${playerColor} Selected`);
+  }
+}
+}
+
+function draw() {
+  background(220);
+  // Display lives
+fill(0);
+textSize(20);
+textAlign(LEFT, TOP);
+text(`Lives: ${lives}`, 10, 10);
+
+  if (gameOver && lives > 0) {
+    // Draw game over screen
+    textSize(32);
+    textAlign(CENTER, CENTER);
+    text("Game Over", width / 2, height / 2 - 50);
+    textSize(20);
+    text("Click to Play Again", width / 2, height / 2);
+    cursor(ARROW);
+    if (mouseIsPressed) {
+      resetGame();
+    }
+  } else if (playerColor !== "white") {
+    // Draw player circle
+    fill(playerColor);
+    ellipse(playerX, playerY, playerRadius * 2);
+
+    // Draw obstacles
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const obstacle = obstacles[i];
+      obstacle.x -= obstacleSpeed;
+      fill(0);
+      rect(obstacle.x, obstacle.y, obstacleWidth, obstacleHeight);
+      if (obstacle.x < 0) {
+        obstacles.splice(i, 1);
+      } else if (collision(playerX, playerY, playerRadius, obstacle.x, obstacle.y, obstacleWidth, obstacleHeight)) {
+        gameOver = true;
+       // lives--;
+      }
+    }
+
+    // Update player position if arrow keys are pressed
+    if (keyIsDown(LEFT_ARROW) && playerX > playerRadius) {
+      playerX -= 5;
+    } else if (keyIsDown(RIGHT_ARROW) && playerX < width - playerRadius) {
+      playerX += 5;
+    }
+    else if (keyIsDown(UP_ARROW) && playerY > playerRadius) {
+      playerY -= 5;
+    } else if (keyIsDown(DOWN_ARROW) && playerY < height - playerRadius) {
+      playerY += 5;
+    }
+    
+ if (lives == 3) {
+  textSize(32);
+  textAlign(CENTER, TOP);
+  fill(255);
+  text("Let's play!", width / 2, 10);
+}
+    
+  } if (lives == 2) {
+     textSize(25);
+  textAlign(CENTER, TOP);
+  fill(255);
+  text("are you even trying", width / 2, 10);
+  }
+  
+  if (lives == 1){
+        textSize(25);
+  textAlign(CENTER, TOP);
+  fill(255);
+  text("be careful", width / 2, 10);
+  }
+    
+
+    // Draw game over screen if necessary
+  if (lives <= 0) {
+  textSize(32);
+  textAlign(CENTER, CENTER);
+  fill(255, 0, 0);
+  text("YOU LOSE", width / 2, height / 2);
+  soundtrack.stop();
+  gameOver = true;
+  obstacles = [];
+  noLoop();
+
+  // Create a "what happened" button
+  const button = createButton("What happened?");
+  button.position(width / 2 - 50, height / 2 + 50);
+  button.size(100, 50);
+  button.mousePressed(() => {
+    window.open("https://editor.p5js.org/judithrosenbluth/sketches/1CeiL1RCn");
+  });
+}
+
+   
+
+   if (gameOver && lives > 0) {
+  // Draw game over screen
+  textSize(32);
+    fill(255);
+  textAlign(CENTER, CENTER);
+  text("Game Over", width / 2, height / 2 - 50);
+  textSize(20);
+  text("Click to Play Again", width / 2, height / 2);
+  cursor(ARROW);
+  if (mouseIsPressed) {
+    resetGame();
+  }
+  }
+}
+
+function selectPlayerColor(color) {
+  // Select player color
+  playerColor = color;
+
+  // Highlight selected circle
+  if (color === "red") {
+    redCircle.style("border", "2px solid white");
+    blueCircle.style("border", "none");
+    greenCircle.style("border", "none");
+  } else if (color === "blue") {
+    redCircle.style("border", "none");
+    blueCircle.style("border", "2px solid white");
+    greenCircle.style("border", "none");
+  } else if (color === "green") {
+    redCircle.style("border", "none");
+    blueCircle.style("border", "none");
+    greenCircle.style("border", "2px solid white");
+  }
+}
+
+function startGame() {
+   introContainer.hide();
+  if (soundtrackPlay == false){
+      soundtrack.play();
+    soundtrackPlay = true;
+  }
+    // Reset game state
+    playerX = width / 2;
+    playerY = height - playerRadius;
+    gameOver = false;
+    obstacles = [];
+
+    // Generate obstacles
+    setInterval(() => {
+      obstacles.push({
+        x: width,
+        y: random(height - obstacleHeight)
+      });
+    }, 3000);
+
+    loop();
+}
+
+
+
+// Mouse click listener to start game after choosing player
+function mouseClicked() {
+  if (playerColor !== "white" && !gameOver) {
+    startGame();
+  }
+}
+
+
+function resetGame() {
+  // Reset game state
+  playerX = width / 2;
+  playerY = height - playerRadius;
+  gameOver = false;
+
+  // Clear existing intervals
+  for (let i = 0; i < obstacles.length; i++) {
+    clearInterval(obstacles[i].interval);
+  }
+
+  obstacles = [];
+  if (obstacles[0] && obstacles[0].interval) clearInterval(obstacles[0].interval);
+  obstacles.push({
+    x: width,
+    y: random(height - obstacleHeight),
+    interval: setInterval(() => {
+      obstacles.push({
+        x: width,
+        y: random(height - obstacleHeight),
+  //      interval: obstacles[0].interval
+      });
+    }, 3000)
+  });
+
+  loop();
+}
+
+
+function collision(x1, y1, r1, x2, y2, w2, h2) {
+  const cx = constrain(x1, x2, x2 + w2);
+  const cy = constrain(y1, y2, y2 + h2);
+  const distance = dist(x1, y1, cx, cy);
+  if (distance < r1) {
+      collisionSound.play();
+    lives--;
+    return true;
+  } else {
+    return false;
+  }
+}
